@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Event System</title>
+
+    <div class="navbar">
+        <div>
+            <a href="index.html">
+                <img class="NavImg" src="logo.png">
+                <!-- <img class="navimgsscreen" src="simple Tree house-1 (1).png"> -->
+            </a>
+        </div>
+
+    
+        <ul class="center-nav">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="regions.html">Counties</a></li>
+             <li><a href="Resource.html">Resources</a></li>
+        </ul>
+
+          <ul class="center-nav-img">
+            <li><a href="search.html">
+                <img class="NavCenImg" src="search-interface-symbol.png">
+            </a></li>
+            <li><a href="signin.html">
+                <img class="NavCenImg" src="user.png">
+            </a></li>
+        </ul>
+        
+    </div>
+   
+</head>
+<body>
+<div class = "search">
+    <div class="box">
+        <h2>Create Event</h2>
+        <input type="text" id="hostName" placeholder="Host Name">
+        <input type="text" id="eventTitle" placeholder="Event Title">
+        <input type="text" id="location" placeholder="Location">
+        <input type="text" id="ageRange" placeholder="Age Range">
+        <input type="datetime-local" id="eventTime">
+        <textarea id="description" placeholder="Event Description"></textarea>
+        <button id="submitBtn">Save Event</button>
+    </div>
+
+    <div class="box">
+        <h2>Search Events</h2>
+        <p style="font-size: 0.8em; color: #666;">Search by Title, Host, Location, or Date</p>
+        <input type="text" id="searchInput" placeholder="Type here to search...">
+        <div id="resultsList"></div>
+    </div>
+
+    <div id="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeModal">&times;</span>
+            <div id="eventDetailContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // 1. DATA INITIALIZATION
+        // We use 'var' here so we don't get "already declared" errors if the page re-runs
+        var events = JSON.parse(localStorage.getItem('mySavedEvents')) || [];
+
+        // 2. ADD EVENT FUNCTION
+        function addEvent() {
+            const host = document.getElementById('hostName').value;
+            const title = document.getElementById('eventTitle').value;
+            const loc = document.getElementById('location').value;
+            const age = document.getElementById('ageRange').value;
+            const time = document.getElementById('eventTime').value;
+            const desc = document.getElementById('description').value;
+
+            if (!host || !title) {
+                alert("Please enter at least a Host and a Title!");
+                return;
+            }
+
+            const newEvent = {
+                id: Date.now(),
+                host: host,
+                title: title,
+                location: loc,
+                age: age,
+                time: time,
+                description: desc
+            };
+
+            events.push(newEvent);
+            localStorage.setItem('mySavedEvents', JSON.stringify(events));
+            
+            alert("Event successfully saved!");
+            
+            // Clear the form
+            document.querySelectorAll('input, textarea').forEach(el => el.value = "");
+        }
+
+        // 3. SEARCH FUNCTION
+        function runSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const resultsDiv = document.getElementById('resultsList');
+            resultsDiv.innerHTML = "";
+
+            if (query.trim() === "") return;
+
+            const filtered = events.filter(ev => {
+                return ev.title.toLowerCase().includes(query) || 
+                       ev.host.toLowerCase().includes(query) || 
+                       ev.location.toLowerCase().includes(query) || 
+                       ev.time.includes(query);
+            });
+
+            filtered.forEach(ev => {
+                const div = document.createElement('div');
+                div.className = "search-item";
+                div.innerHTML = `<strong>${ev.title}</strong><br><small>${ev.host} | ${ev.location}</small>`;
+                div.onclick = function() { showPopup(ev); };
+                resultsDiv.appendChild(div);
+            });
+        }
+
+        // 4. POPUP FUNCTIONS
+        function showPopup(ev) {
+            const content = document.getElementById('eventDetailContent');
+            content.innerHTML = `
+                <h3>${ev.title}</h3>
+                <p><strong>Host:</strong> ${ev.host}</p>
+                <p><strong>Location:</strong> ${ev.location}</p>
+                <p><strong>Time:</strong> ${ev.time}</p>
+                <p><strong>Ages:</strong> ${ev.age}</p>
+                <p><strong>Description:</strong><br>${ev.description}</p>
+                <button onclick="deleteThis(${ev.id})" style="background:#cc0000;">Delete Event</button>
+            `;
+            document.getElementById('modal').style.display = "block";
+        }
+
+        function deleteThis(id) {
+            if (confirm("Delete this event?")) {
+                events = events.filter(item => item.id !== id);
+                localStorage.setItem('mySavedEvents', JSON.stringify(events));
+                document.getElementById('modal').style.display = "none";
+                runSearch();
+            }
+        }
+
+        // 5. CONNECT EVERYTHING
+        document.getElementById('submitBtn').onclick = addEvent;
+        document.getElementById('searchInput').onkeyup = runSearch;
+        document.getElementById('closeModal').onclick = function() {
+            document.getElementById('modal').style.display = "none";
+        };
+    </script>
+
+    </div>
+</body>
+</html>
